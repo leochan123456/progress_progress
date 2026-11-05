@@ -1,0 +1,2 @@
+min_edge,fee_coefficient,quote_rows_same_day,trade_rows,yes_trades,no_trades,total_pnl_per_share,mean_pnl_per_trade,winning_trades
+0.03,0.05,47516,24052,16569,7483,66.7683790500001,0.0027760011246466035,4304

@@ -113,6 +113,41 @@ ISOM 3360/RESULT/rf_feature_importance.csv
 
 The model currently trains cutoff classifiers from `8 C` through the highest observed temperature cutoff. Cutoff probabilities are made monotonic so a higher temperature cutoff cannot have a larger probability than a lower cutoff.
 
+### 6. Run the within-day Polymarket backtest
+
+This compares every same-day hourly quote with the Random Forest probability for that exact 1 C bracket. It records a trade when the expected edge exceeds the default 3 percentage point minimum.
+
+```bash
+/home/codespace/.python/current/bin/python3 "ISOM 3360/polymarket_backtest.py"
+```
+
+The taker fee is calculated as:
+
+```text
+fee = 0.05 * price * (1 - price)
+```
+
+For Buy Yes:
+
+```text
+edge = model_p - price - fee
+```
+
+For Buy No:
+
+```text
+edge = (1 - model_p) - (1 - price) - fee
+```
+
+The output is saved to:
+
+```text
+ISOM 3360/RESULT/backtest/polymarket_within_day_trades.csv
+ISOM 3360/RESULT/backtest/polymarket_within_day_summary.csv
+```
+
+The trade file includes `date`, `hour`, `bracket`, `side`, `price`, `model_p`, `edge`, and realized per-share `pnl`, along with the fee and settlement fields. It excludes known bad market dates and dates without an HKO settlement value. Since it evaluates every qualifying hourly quote, `total_pnl_per_share` is not a capital-weighted portfolio return and may count multiple trades in the same market.
+
 ## Interpreting Results
 
 The regression model is evaluated with RMSE and MAE. The cutoff models are evaluated with Brier score and log-loss. Lower values are better.
