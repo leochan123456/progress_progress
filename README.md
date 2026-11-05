@@ -130,3 +130,18 @@ To forecast a future date, the project needs:
 3. A model retrained on all labelled historical data available at that time.
 
 Missing future target values do not prevent forecasting, but future input weather observations are required for lagged and rolling features.
+
+## Daily GitHub Action
+
+The workflow at `.github/workflows/daily-data-update.yml` runs every day at `01:15 UTC`. It can also be started manually from the repository's **Actions** tab.
+
+The daily workflow:
+
+1. Installs the Python dependencies.
+2. Refreshes Polymarket markets, hourly prices, and HKO settlement extracts.
+3. Cleans the PM files.
+4. Commits and pushes changed files under `ISOM 3360/Storage/PM`.
+
+The workflow does not retrain the Random Forest every day. The HKO historical CSV source is updated less frequently, and model training requires completed target temperatures. When new labelled HKO data becomes available, run the HKO builder, HKO cleaner, and Random Forest script manually before publishing new model results.
+
+For the scheduled workflow to push commits, the repository Actions setting **Workflow permissions** must allow read and write access to repository contents.
