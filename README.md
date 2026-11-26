@@ -139,6 +139,7 @@ The benchmark and full suite require the hourly frame, forecast bulletin archive
 | Evidence | Purpose | Location |
 | --- | --- | --- |
 | Step 5a baseline model | Original RF regression and cutoff-classifier implementation | `ISOM 3360/random_forest_models.py` |
+| Progress-report RF copy | Identical preserved copy of the original baseline | `ISOM 3360/old ver.py` |
 | Step 6a baseline backtest | Original RF probability/market backtest | `ISOM 3360/polymarket_backtest.py` |
 | Chris RF extraction | RF-only shared helpers, daily, walk-forward, hourly, and backtest scripts | `ISOM 3360/ISOM3360_RF_Chris/` |
 | Full member model suite | Shared daily/hourly models and upgrades | `ISOM 3360/model_suite_code/` |
