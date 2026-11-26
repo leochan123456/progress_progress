@@ -13,7 +13,8 @@ import suite_common as SUITE  # noqa: E402
 
 XGB_REPO = os.path.join(PROJECT_ROOT, "ISOM3360_XGBoost_for_repo", "ISOM 3360")
 TRAINING_SET = os.path.join(PROJECT_ROOT, "Storage", "HKO", "processed", "hko_training_set.csv")
-PM_PRICE_10MIN = os.path.join(PROJECT_ROOT, "hourly_benchmark_code", "pm_price_10min.csv")
+PM_PRICE_10MIN = os.path.join(PROJECT_ROOT, "Storage", "PM", "pm_price_10min.csv")
+PM_PRICE_10MIN_LEGACY = SUITE.PM_PRICES_10MIN
 PM_PRICE_HOURLY = os.path.join(PROJECT_ROOT, "Storage", "PM", "cleaned", "pm_price_history_hourly_cleaned.csv")
 OUT = os.path.join(SCRIPT_DIR, "out")
 DAILY_OUT = os.path.join(OUT, "daily")
@@ -22,9 +23,10 @@ BACKTEST_OUT = os.path.join(OUT, "backtest")
 
 
 def load_prices():
-    if os.path.isfile(PM_PRICE_10MIN):
-        prices = SUITE.load_prices()
-        return prices, 10, "10-minute"
+    for path in (PM_PRICE_10MIN, PM_PRICE_10MIN_LEGACY):
+        if os.path.isfile(path):
+            prices = pd.read_csv(path, parse_dates=["obs_date", "time_hkt"])
+            return prices.rename(columns={"obs_date": "date"}), 10, "10-minute"
     if os.path.isfile(PM_PRICE_HOURLY):
         prices = pd.read_csv(PM_PRICE_HOURLY, parse_dates=["obs_date", "time_hkt"])
         prices = prices.rename(columns={"obs_date": "date"})

@@ -1,6 +1,6 @@
 """Polymarket HK temperature: 10-minute Yes price history for every bracket (CLOB prices-history, fidelity=10).
 Usage: python fetch_pm_10min.py MARKETS_CSV OUT_CSV"""
-import json, sys, time, urllib.request
+import json, sys, time, urllib.error, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 
@@ -10,9 +10,10 @@ def get(u, tries=5):
         try:
             with urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"}), timeout=60) as r:
                 return json.loads(r.read())
-        except Exception:
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+            if i == tries - 1:
+                raise RuntimeError(f"Failed to fetch price history: {u}") from exc
             time.sleep(2 * (i + 1))
-    return {"history": []}
 
 
 def one(r):
