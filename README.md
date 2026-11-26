@@ -4,112 +4,135 @@ This repository contains the original Random Forest baseline, the newer isolated
 
 ## 60-second teacher fast track
 
-From the repository root in PowerShell, with the environment already installed, run the two baseline scripts against the checked-in HKO and Polymarket data:
+From the repository root, with the environment activated, run the baseline and Chris RF scripts against the checked-in data:
 
-```powershell
-.\.venv\Scripts\python.exe "ISOM 3360\random_forest_models.py"
-.\.venv\Scripts\python.exe "ISOM 3360\polymarket_backtest.py"
+```bash
+python "ISOM 3360/random_forest_models.py"
+python "ISOM 3360/polymarket_backtest.py"
+python "ISOM 3360/ISOM3360_RF_Chris/rf_daily.py"
+python "ISOM 3360/ISOM3360_RF_Chris/rf_walkforward.py"
+python "ISOM 3360/ISOM3360_RF_Chris/rf_backtest.py"
 ```
 
-The first command prints the test RMSE/MAE and cutoff Brier/log-loss scores. The second prints the buy/sell P&L summary. These commands do not refresh external data or require the large hourly HKO archive.
+The baseline scripts print model scores and buy/sell P&L. Chris's scripts generate daily, walk-forward, and backtest evidence; tuning and monthly refits can take longer than 60 seconds. They do not require the large hourly HKO archive.
 
 ## Environment
 
 Python 3.12 is the tested runtime. From the repository root:
 
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```bash
+python -m venv .venv
 ```
 
-The `.venv` is local and ignored by Git. In VS Code, select `.venv\Scripts\python.exe` as the workspace interpreter.
+Activate the environment for your shell:
+
+```text
+PowerShell: .\.venv\Scripts\Activate.ps1
+macOS/Linux: source .venv/bin/activate
+```
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+The `.venv` is local and ignored by Git.
 
 ## Transparent replication guide: Steps 1–10
 
 Run commands from the repository root unless a step says otherwise.
 
-1. **Set up Python.** Create `.venv` and install `requirements.txt` using the commands above.
+### Step 1: Set up Python
 
-2. **Refresh HKO daily data and build features.**
+Create and activate `.venv` and install `requirements.txt` using the commands above.
 
-   ```powershell
-   .\.venv\Scripts\python.exe "ISOM 3360\hko_build_training_set.py"
-   ```
+### Step 2: Refresh HKO daily data and build features
 
-   The builder caches the 13 monthly HKO CSV series under `ISOM 3360\Storage\HKO\raw_hko\` and writes the observations and lagged training set under `ISOM 3360\Storage\HKO\processed\`. The current checked monthly series end on 2026-10-31; the Daily Extract fills through 2026-11-25. Recent King's Park inputs stay blank until HKO publishes them.
+```bash
+python "ISOM 3360/hko_build_training_set.py"
+```
 
-3. **Clean the training set.**
+The builder caches 13 monthly HKO CSV series under `ISOM 3360/Storage/HKO/raw_hko/` and writes observations and lagged features under `ISOM 3360/Storage/HKO/processed/`. The checked monthly series end on 2026-10-31; the Daily Extract fills through 2026-11-25. Recent King's Park inputs stay blank until HKO publishes them.
 
-   ```powershell
-   .\.venv\Scripts\python.exe "ISOM 3360\cleaning.py"
-   ```
+### Step 3: Clean the training set
 
-   Correlations use available observations. VIF and Lasso use complete predictor rows, and rows with missing selected predictors are left out of the cleaned modeling file. This avoids imputing unpublished sunshine/wind data.
+```bash
+python "ISOM 3360/cleaning.py"
+```
 
-4. **Refresh Polymarket source files** (network required).
+Correlations use available observations. VIF and Lasso use complete predictor rows, and rows with missing selected predictors are excluded from the cleaned modeling file.
 
-   ```powershell
-   .\.venv\Scripts\python.exe "ISOM 3360\polymarket_hk_temp_scraper.py"
-   ```
+### Step 4: Refresh Polymarket source files
 
-5. **Clean Polymarket markets, prices, and settlements.**
+This step requires network access.
 
-   ```powershell
-   .\.venv\Scripts\python.exe "ISOM 3360\clean_pm_data.py"
-   ```
+```bash
+python "ISOM 3360/polymarket_hk_temp_scraper.py"
+```
 
-6. **Run the preserved Step 5a baseline model.**
+### Step 5: Clean Polymarket markets, prices, and settlements
 
-   ```powershell
-   .\.venv\Scripts\python.exe "ISOM 3360\random_forest_models.py"
-   ```
+```bash
+python "ISOM 3360/clean_pm_data.py"
+```
 
-   This evaluates the continuous maximum-temperature model and 1-degree cutoff classifiers. Results are saved under `ISOM 3360\RESULT\`.
+### Step 6: Run the preserved Step 5a baseline model
 
-7. **Run the preserved Step 6a baseline backtest.**
+```bash
+python "ISOM 3360/random_forest_models.py"
+```
 
-   ```powershell
-   .\.venv\Scripts\python.exe "ISOM 3360\polymarket_backtest.py"
-   ```
+This evaluates the continuous maximum-temperature model and 1-degree cutoff classifiers. Results are saved under `ISOM 3360/RESULT/`.
 
-   The backtest uses the configured fee and edge threshold and saves its trade ledger and summary under `ISOM 3360\RESULT\backtest\`. It counts repeated hourly quotes; its total P&L is not a capital-weighted portfolio return.
+### Step 7: Run the preserved Step 6a baseline backtest
 
-8. **Run Chris's isolated daily RF and monthly walk-forward evaluations.**
+```bash
+python "ISOM 3360/polymarket_backtest.py"
+```
 
-   ```powershell
-   .\.venv\Scripts\python.exe "ISOM 3360\ISOM3360_RF_Chris\rf_daily.py"
-   .\.venv\Scripts\python.exe "ISOM 3360\ISOM3360_RF_Chris\rf_walkforward.py"
-   ```
+The backtest saves its trade ledger and summary under `ISOM 3360/RESULT/backtest/`. It counts repeated hourly quotes; its total P&L is not a capital-weighted portfolio return.
 
-   These use the shared year-based split (train through 2022, validation 2023, test 2024 onward). Outputs go to the ignored `ISOM 3360\ISOM3360_RF_Chris\out\` folder.
+### Step 8: Run Chris's daily RF, walk-forward, and backtest
 
-9. **Prepare the hourly HKO dataset, then run the hourly RF.**
+To refresh 10-minute prices (network required), then run the evaluations:
 
-   The hourly archive is deliberately not included in Git. It spans multiple years and can be large; the current checkout does not contain `hourly_frame.csv` or `daily_table.csv`, so `rf_hourly.py` cannot run until these are built.
+```bash
+python "ISOM 3360/hourly_benchmark_code/fetch_pm_10min.py" "ISOM 3360/Storage/PM/cleaned/pm_markets_cleaned.csv" "ISOM 3360/Storage/PM/pm_price_10min.csv"
+python "ISOM 3360/ISOM3360_RF_Chris/rf_daily.py"
+python "ISOM 3360/ISOM3360_RF_Chris/rf_walkforward.py"
+python "ISOM 3360/ISOM3360_RF_Chris/rf_backtest.py"
+```
 
-   ```powershell
-   .\.venv\Scripts\python.exe "ISOM 3360\ISOM3360_XGBoost_for_repo\ISOM 3360\hko_hourly_scraper.py" 2020-07-01 2026-11-25 "ISOM 3360\ISOM3360_XGBoost_for_repo\ISOM 3360\Storage\HKO\hourly\archive"
-   .\.venv\Scripts\python.exe "ISOM 3360\ISOM3360_XGBoost_for_repo\ISOM 3360\xgb_build_hourly_dataset.py"
-   .\.venv\Scripts\python.exe "ISOM 3360\ISOM3360_RF_Chris\rf_hourly.py"
-   ```
+The split is train through 2022, validation 2023, and test 2024 onward. CSV evidence is saved under `ISOM 3360/ISOM3360_RF_Chris/out/`. The 10-minute price file occupies 43,615,659 bytes in Git (44,583,636 bytes in this Windows checkout). Walk-forward probabilities use the tuned validation sigma. The backtest uses the latest 10-minute price at or before 00:10; without that file it falls back to hourly prices with a 70-minute lag.
 
-   The archive, raw hourly snapshots, and derived hourly tables are ignored. The scraper is a long-running first-time download; do not commit its archive.
+### Step 9: Prepare the hourly HKO dataset and run the hourly RF
 
-10. **Run the full hourly benchmark/model-suite reports** (after completing Step 9).
+Obtain `hourly_frame.csv` and `daily_table.csv` from the team's hourly HKO pipeline, or build them with the commands below. The multi-year archive is large and excluded from Git.
 
-    ```powershell
-    .\.venv\Scripts\python.exe "ISOM 3360\hourly_benchmark_code\fetch_flw.py" 20260301 20261114 "ISOM 3360\hourly_benchmark_code\flw_raw"
-    .\.venv\Scripts\python.exe "ISOM 3360\hourly_benchmark_code\fetch_pm_10min.py" "ISOM 3360\Storage\PM\cleaned\pm_markets_cleaned.csv" "ISOM 3360\hourly_benchmark_code\pm_price_10min.csv"
-    .\.venv\Scripts\python.exe "ISOM 3360\hourly_benchmark_code\benchmarks.py"
-    .\.venv\Scripts\python.exe "ISOM 3360\hourly_benchmark_code\score.py"
-    .\.venv\Scripts\python.exe "ISOM 3360\hourly_benchmark_code\report.py"
-    .\.venv\Scripts\python.exe "ISOM 3360\model_suite_code\suite_daily.py"
-    .\.venv\Scripts\python.exe "ISOM 3360\model_suite_code\suite_hourly.py"
-    .\.venv\Scripts\python.exe "ISOM 3360\model_suite_code\suite_upgrades.py"
-    .\.venv\Scripts\python.exe "ISOM 3360\model_suite_code\suite_excel.py"
-    ```
+```bash
+python "ISOM 3360/ISOM3360_XGBoost_for_repo/ISOM 3360/hko_hourly_scraper.py" 2020-07-01 2026-11-25 "ISOM 3360/ISOM3360_XGBoost_for_repo/ISOM 3360/Storage/HKO/hourly/archive"
+python "ISOM 3360/ISOM3360_XGBoost_for_repo/ISOM 3360/xgb_build_hourly_dataset.py"
+python "ISOM 3360/ISOM3360_RF_Chris/rf_hourly.py"
+```
 
-    The benchmark and full suite require the hourly frame, HKO forecast bulletin archive, cleaned PM markets, and 10-minute prices. The 10-minute backtests use snapshots at the decision time; the RF-only backtest falls back to hourly prices with a 70-minute lag when no 10-minute file exists.
+The derived tables can be tracked; do not commit the archive.
+
+### Step 10: Run the full hourly benchmark and model-suite reports
+
+After Step 9, fetch the full 20200101–20261123 bulletin range for `suite_upgrades.py` retraining. The checked-in `HK_Temp_Hourly_Benchmarks.xlsx` already stores parsed bulletins; reproducing that evidence alone does not require the download.
+
+```bash
+python "ISOM 3360/hourly_benchmark_code/fetch_flw.py" 20200101 20261123 "ISOM 3360/hourly_benchmark_code/flw_raw"
+python "ISOM 3360/hourly_benchmark_code/fetch_pm_10min.py" "ISOM 3360/Storage/PM/cleaned/pm_markets_cleaned.csv" "ISOM 3360/hourly_benchmark_code/pm_price_10min.csv"
+python "ISOM 3360/hourly_benchmark_code/benchmarks.py"
+python "ISOM 3360/hourly_benchmark_code/score.py"
+python "ISOM 3360/hourly_benchmark_code/report.py"
+python "ISOM 3360/model_suite_code/suite_daily.py"
+python "ISOM 3360/model_suite_code/suite_hourly.py"
+python "ISOM 3360/model_suite_code/suite_upgrades.py"
+python "ISOM 3360/model_suite_code/suite_excel.py"
+```
+
+The benchmark and full suite require the hourly frame, forecast bulletin archive, cleaned PM markets, and 10-minute prices. They currently read the price file from `hourly_benchmark_code/`, unlike Chris's backtest in Step 8.
 
 ## Evidence map
 
@@ -131,12 +154,16 @@ All scripts derive project paths from `__file__`; no `/home/claude/...` paths ar
 | Run | Test rows/days | RMSE (°C) | MAE (°C) | Bracket log-loss | P&L |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Step 5a baseline RF | 1,036 | 1.7024 | 1.3429 | Per-cutoff in `rf_metrics.csv` | — |
-| RF daily, original settings | 1,060 | 1.6980 | 1.3405 | 1.9616 | +3.40 |
-| RF daily, validation-tuned | 1,060 | 1.7018 | 1.3506 | 1.9647 | +3.75 |
-| RF monthly walk-forward | 1,060 | 1.7009 | 1.3475 | 1.9641 | Not separately backtested |
+| RF daily, original settings | 1,060 | 1.6980 | 1.3405 | 1.9616 | +4.58 |
+| RF daily, validation-tuned | 1,060 | 1.7018 | 1.3506 | 1.9647 | +5.80 |
+| RF monthly walk-forward | 1,060 | 1.7009 | 1.3475 | 1.9641 | +4.16 |
+
+The live checkout's 1,060 test days include November 24–25, two more than the workbook's frozen 1,058-day snapshot ending 2026-11-23.
 
 The baseline cleaned test covers 2024-01-01 through 2026-11-01. The isolated daily RF covers 2024-01-01 through 2026-11-25; its input pipeline imputes predictor gaps, while the baseline cleaner excludes 24 incomplete recent rows. Validation tuning did not improve the daily test RMSE.
 
-The isolated RF backtest P&L is per share over 232 market days (837 tuned first-signal trades) using hourly prices at a 70-minute lag: the more realistic 10-minute prices were not present in this checkout. Its 95% bootstrap range is -15.27 to +23.76, so the positive total is not evidence of a reliable edge. The preserved Step 6a backtest reported +46.91 across 27,850 trades from 55,300 hourly quote rows at a 3-cent threshold; repeated quotes mean this is not portfolio return.
+The isolated RF backtest P&L is per share over 233 market days, using 10-minute prices at or before 00:10. The tuned model's 870 first-signal trades have a 95% bootstrap range of -13.37 to +25.42, so the positive total is not evidence of a reliable edge. The preserved Step 6a backtest reported +46.91 across 27,850 trades from 55,300 hourly quote rows at a 3-cent threshold; repeated quotes mean this is not portfolio return.
 
-The hourly RF smoke test is **blocked**, not passed: the required `hourly_frame.csv` and `daily_table.csv` are absent because the raw hourly HKO archive has not been downloaded. No substitute data was used.
+## Optional Hourly Extension
+
+The team's hourly HKO pipeline provides `hourly_frame.csv` and `daily_table.csv` for running the hourly RF locally. For verified hourly RF results, see tabs B1–B5 in [HK_Temp_Model_Suite.xlsx](HK_Temp_Model_Suite.xlsx): 64.8% bracket hit rate, 1.003 log-loss, and +3.97 first-signal P&L.
