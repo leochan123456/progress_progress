@@ -1,0 +1,19 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.rar
+*.zip
+.DS_Store
+Thumbs.db
+ECON4305Group4_Report.pdf
+ISOM 3360/Storage/HKO/hourly/archive/
+ISOM 3360/ISOM3360_XGBoost_for_repo/ISOM 3360/Storage/HKO/hourly/archive/
+ISOM 3360/ISOM3360_XGBoost_for_repo/ISOM 3360/Storage/HKO/hourly/raw/
+ISOM 3360/ISOM3360_XGBoost_for_repo/ISOM 3360/Storage/HKO/hourly/hko_hourly_*.csv
+ISOM 3360/ISOM3360_XGBoost_for_repo/ISOM 3360/Storage/HKO/hourly/hourly_frame.csv
+ISOM 3360/ISOM3360_XGBoost_for_repo/ISOM 3360/Storage/HKO/hourly/daily_table.csv
+ISOM 3360/model_suite_code/out/
+ISOM 3360/hourly_benchmark_code/out/
+ISOM 3360/ISOM3360_RF_Chris/out/

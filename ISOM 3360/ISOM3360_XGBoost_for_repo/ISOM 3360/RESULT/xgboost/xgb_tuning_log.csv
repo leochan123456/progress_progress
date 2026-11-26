@@ -1,0 +1,4 @@
+max_depth,learning_rate,min_child_weight,reg_lambda,best_trees,val_logloss
+3,0.1,10,1.0,77,0.9538138508796692
+7,0.1,10,1.0,50,0.9539738893508911
+5,0.1,10,1.0,41,0.9544824361801147

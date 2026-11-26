@@ -86,13 +86,17 @@ def clean(input_path, output_path):
 
     model_data = df[significant].copy()
     print("X shape after dropping insignificant features:", model_data.shape)
-    print_vif(model_data)
+    complete_rows = model_data.notna().all(axis=1) & target.notna()
+    complete_data = model_data.loc[complete_rows]
+    print("Rows omitted from VIF/Lasso and cleaned output due to missing predictors:",
+          int((~complete_rows).sum()))
+    print_vif(complete_data)
 
     lasso = Pipeline([
         ("scaler", StandardScaler()),
         ("model", LassoCV(cv=5, random_state=42, max_iter=10000, n_jobs=-1)),
     ])
-    lasso.fit(model_data, target)
+    lasso.fit(complete_data, target.loc[complete_rows])
 
     coefficients = pd.Series(
         lasso.named_steps["model"].coef_, index=model_data.columns
@@ -107,7 +111,7 @@ def clean(input_path, output_path):
     print("Best alpha:", round(lasso.named_steps["model"].alpha_, 6))
 
     final_features = selected.index.tolist()
-    cleaned = df[["date"] + final_features + ["target_max_temp_c"]]
+    cleaned = df.loc[complete_rows, ["date"] + final_features + ["target_max_temp_c"]]
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     cleaned.to_csv(output_path, index=False)
     print("\nSaved:", output_path)

@@ -1,0 +1,2 @@
+lag_minutes,min_edge,fee_coefficient,quote_rows_same_day,trade_rows,yes_trades,no_trades,total_pnl_per_share,mean_pnl_per_trade,winning_trades,first_signal_trades,first_signal_total_pnl,first_signal_mean_pnl,first_signal_pnl_95pct_low,first_signal_pnl_95pct_high,mean_expected_edge,test_days
+10.0,0.05,0.05,4020,2813,1311,1502,7.011283174999974,0.002492457580874502,995,403,6.800592887500001,0.016874920316377173,-3.3624368846875,18.3017430003125,0.13267221560173698,58
